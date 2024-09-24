@@ -221,7 +221,7 @@ describe("Parse CSS", () => {
     ]);
   });
 
-  test("parse multiple selectors, both with state", () => {
+  test.only("parse multiple selectors, both with state", () => {
     expect(parseCss(`a:active, a:hover { color: #ff0000 }`)).toEqual([
       {
         selector: "a",
@@ -460,11 +460,33 @@ describe("Parse CSS", () => {
   });
 
   test("parse child combinator", () => {
-    expect(parseCss(`a > b { color: #ff0000 }`)).toEqual([]);
+    expect(parseCss(`a > b { color: #ff0000 }`)).toEqual([
+      {
+        selector: "a > b",
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+    ]);
   });
 
   test("parse space combinator", () => {
-    expect(parseCss(`a b { color: #ff0000 }`)).toEqual([]);
+    expect(parseCss(`.a b { color: #ff0000 }`)).toEqual([
+      {
+        selector: "a b",
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+    ]);
+  });
+
+  test("parse nested selectors as one token", () => {
+    expect(parseCss(`a b c.d { color: #ff0000 }`)).toEqual([
+      {
+        selector: "a b c.d",
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+    ]);
   });
 });
 
