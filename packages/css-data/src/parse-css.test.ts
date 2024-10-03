@@ -194,7 +194,18 @@ describe("Parse CSS", () => {
     ]);
   });
 
+  test("attribute selector", () => {
+    expect(parseCss(`[class^="a"] { color: #ff0000 }`)).toEqual([
+      {
+        selector: '[class^="a"]',
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+    ]);
+  });
+
   test("parse first pseudo class as selector", () => {
+    // E.g. :root
     expect(parseCss(`:first-pseudo:my-state { color: #ff0000 }`)).toEqual([
       {
         selector: ":first-pseudo",
@@ -232,7 +243,7 @@ describe("Parse CSS", () => {
     ]);
   });
 
-  test.only("parse multiple selectors, both with state", () => {
+  test("parse multiple selectors, both with state", () => {
     expect(parseCss(`a:active, a:hover { color: #ff0000 }`)).toEqual([
       {
         selector: "a",
