@@ -243,14 +243,14 @@ const parseLiteral = (
         children: new List<CssNode>().fromArray(fallback),
       }).trim();
       if (name.type === "Identifier") {
-        return {
+        const value: VarValue = {
           type: "var",
           value: name.name.slice("--".length),
-          fallbacks:
-            fallback.length === 0
-              ? []
-              : [{ type: "unparsed", value: fallbackString }],
         };
+        if (fallback.length > 0) {
+          value.fallback = { type: "unparsed", value: fallbackString };
+        }
+        return value;
       }
     }
 
@@ -456,7 +456,11 @@ export const parseCssValue = (
     );
     // parse only references in custom properties
     if (property.startsWith("--")) {
-      if (matchedValue?.type === "var") {
+      if (
+        matchedValue?.type === "var" ||
+        matchedValue?.type === "unit" ||
+        matchedValue?.type === "rgb"
+      ) {
         return matchedValue;
       }
       return { type: "unparsed", value: input };

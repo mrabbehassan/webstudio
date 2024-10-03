@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from "react";
+import { useLayoutEffect } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
@@ -159,7 +159,7 @@ const toVarValue = (styleDecl: StyleDecl): undefined | VarValue => {
       // escape complex selectors in state like ":hover"
       // setProperty and removeProperty escape automatically
       value: CSS.escape(getEphemeralProperty(styleDecl).slice(2)),
-      fallbacks: [value],
+      fallback: { type: "unparsed", value: toValue(value) },
     };
   }
 };
@@ -307,10 +307,15 @@ export const subscribeStyles = () => {
   };
 };
 
-export const useManageDesignModeStyles = () => {
-  useEffect(subscribeStateStyles, []);
-  useEffect(subscribeEphemeralStyle, []);
-  useEffect(subscribePreviewMode, []);
+export const manageDesignModeStyles = ({ signal }: { signal: AbortSignal }) => {
+  const unsubscribeStateStyles = subscribeStateStyles();
+  const unsubscribeEphemeralStyle = subscribeEphemeralStyle();
+  const unsubscribePreviewMode = subscribePreviewMode();
+  signal.addEventListener("abort", () => {
+    unsubscribeStateStyles();
+    unsubscribeEphemeralStyle();
+    unsubscribePreviewMode();
+  });
 };
 
 export const GlobalStyles = ({ params }: { params: Params }) => {

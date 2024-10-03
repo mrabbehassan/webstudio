@@ -174,50 +174,40 @@ export const parseCss = (css: string, options: ParserOptions = {}) => {
     }
 
     const selectors: Selector[] = [];
-    //console.log(csstree.generate(this.rule.prelude));
-
-    csstree.walk(this.rule.prelude, (node, item) => {
-      if (node.type !== "ClassSelector" && node.type !== "TypeSelector") {
-        return;
-      }
-
-      // Previous item is a combinator
-      if (item.prev?.data.type === "Combinator") {
-        selectors[selectors.length - 1].name += node.name;
-        return;
-      }
-
-      if (item.next?.data.type === "Combinator") {
-        const { name } = item.next.data;
-        // keep space as-is, but add space around other combinators
-        selectors[selectors.length - 1].name +=
-          name === " " ? name : ` ${name} `;
-        return;
-      }
-
-      let { name } = node;
-      let state: string | undefined;
-
-      if (item.next?.data.type === "PseudoElementSelector") {
-        state = `::${item.next.data.name}`;
-      } else if (item.next?.data.type === "PseudoClassSelector") {
-        state = `:${item.next.data.name}`;
-      } else if (selectors.length !== 0) {
-        // a.b
-        name = `.${node.name}`;
-      }
-
-      console.log(item);
-      if (selectors.length === 0) {
-        selectors.push({ name, state });
-      } else {
-        const selector = selectors[selectors.length - 1];
-        selector.name += name;
-        if (state) {
-          selector.state = (selector.state ?? "") + state;
+    if (this.rule.prelude.type === "SelectorList") {
+      for (const selector of this.rule.prelude.children) {
+        if (selector.type !== "Selector" || selector.children.size > 2) {
+          continue;
+        }
+        const [nameNode, stateNode] = selector.children;
+        let name;
+        if (
+          nameNode.type === "ClassSelector" ||
+          nameNode.type === "TypeSelector"
+        ) {
+          name = nameNode.name;
+        } else if (nameNode.type === "PseudoClassSelector") {
+          name = `:${nameNode.name}`;
+        } else {
+          continue;
+        }
+        if (stateNode?.type === "PseudoClassSelector") {
+          selectors.push({
+            name,
+            state: `:${stateNode.name}`,
+          });
+        } else if (stateNode?.type === "PseudoElementSelector") {
+          selectors.push({
+            name,
+            state: `::${stateNode.name}`,
+          });
+        } else {
+          selectors.push({
+            name,
+          });
         }
       }
-    });
+    }
 
     const stringValue = csstree.generate(node.value);
 
