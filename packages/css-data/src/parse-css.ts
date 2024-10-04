@@ -180,37 +180,35 @@ export const parseCss = (css: string, options: ParserOptions = {}) => {
         continue;
       }
       let selector: Selector | undefined = undefined;
-      node.children.forEach((node) => {
+      for (const childNode of node.children) {
         let name: string = "";
         let state: string | undefined;
-        switch (node.type) {
+        switch (childNode.type) {
           case "TypeSelector":
-            name = node.name;
+            name = childNode.name;
             break;
           case "ClassSelector":
-            // .a {} vs a.b {}
-            name = selector ? `.${node.name}` : node.name;
+            name = `.${childNode.name}`;
             break;
           case "AttributeSelector":
-            if (node.value) {
-              name = `[${csstree.generate(node.name)}${node.matcher}${csstree.generate(node.value)}]`;
-            }
+            name = csstree.generate(childNode);
             break;
           case "PseudoClassSelector": {
             // First pseudo selector is not a state but an element selector, e.g. :root
             if (selector) {
-              state = `:${node.name}`;
+              state = `:${childNode.name}`;
             } else {
-              name = `:${node.name}`;
+              name = `:${childNode.name}`;
             }
             break;
           }
+          case "PseudoElementSelector":
+            state = `::${childNode.name}`;
+            break;
           case "Combinator":
             // " " vs " > "
-            name = node.name === " " ? node.name : ` ${node.name} `;
-            break;
-          case "PseudoElementSelector":
-            state = `::${node.name}`;
+            name =
+              childNode.name === " " ? childNode.name : ` ${childNode.name} `;
             break;
         }
 
@@ -219,10 +217,10 @@ export const parseCss = (css: string, options: ParserOptions = {}) => {
           if (state) {
             selector.state = state;
           }
-          return;
+        } else {
+          selector = { name, state };
         }
-        selector = { name, state };
-      });
+      }
       if (selector) {
         selectors.push(selector);
         selector = undefined;
